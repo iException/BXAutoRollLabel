@@ -23,6 +23,7 @@
     self.autoRollLabel.visibleAmount = 3;
     self.autoRollLabel.dataSource = self;
     self.autoRollLabel.delegate = self;
+    self.autoRollLabel.backgroundColor = [UIColor yellowColor];
     [self.view addSubview:self.autoRollLabel];
     [self.autoRollLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.equalTo(self.view.mas_centerX);
@@ -36,7 +37,7 @@
 
 - (NSInteger)numberOfLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel
 {
-    return 4;
+    return 8;
 }
 
 - (NSString *)titleForLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
@@ -62,6 +63,7 @@
 
 - (UIColor *)backgroundColorForLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
 {
+    return [UIColor clearColor];
     if (index % 2 == 0) {
         return [UIColor yellowColor];
     } else {

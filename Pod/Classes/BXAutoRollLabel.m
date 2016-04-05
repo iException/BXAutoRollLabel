@@ -74,12 +74,10 @@
 
         UILabel *oldFirstLabel = self.labels.firstObject;
         CGFloat oldFirstLabelY = oldFirstLabel.frame.origin.y;
-        if (diffY == 0) {
-            return;
-        }
 
+        //scroll up
         if (-oldFirstLabelY >= oldFirstLabel.bounds.size.height) {
-            NSLog(@"diffY: %f, firstLabelY: %f", diffY, oldFirstLabel);
+            NSLog(@"if case1 diffY: %f, firstLabelY: %f", diffY, oldFirstLabelY);
             [self.labels removeObjectAtIndex:0];
             UILabel *newFirstLabel = self.labels.firstObject;
             UILabel *lastLabel = self.labels.lastObject;
@@ -98,15 +96,63 @@
                 make.right.equalTo(self.mas_right).with.offset(-8);
                 make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
             }];
-            [self layoutIfNeeded];
+
             self.previousPoint = currentPoint;
         } else {
-            [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-                make.left.equalTo(self.mas_left).with.offset(8);
-                make.top.equalTo(self.mas_top).with.offset(diffY);
-                make.right.equalTo(self.mas_right).with.offset(-8);
-            }];
+            NSLog(@"if case2 diffY: %f, firstLabelY: %f", diffY, oldFirstLabelY);
+//            UILabel *newFirstLabel = self.labels.lastObject;
+//            [self.labels removeLastObject];
+//            [self.labels insertObject:newFirstLabel atIndex:0];
+//
+//            [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+//                make.left.equalTo(self.mas_left).with.offset(8);
+//                make.bottom.equalTo(self.mas_top).with.offset(diffY);
+//                make.right.equalTo(self.mas_right).with.offset(-8);
+//                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+//            }];
+//
+//            [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+//                make.left.equalTo(self.mas_left).with.offset(8);
+//                make.top.equalTo(newFirstLabel.mas_bottom);
+//                make.right.equalTo(self.mas_right).with.offset(-8);
+//                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+//            }];
+            if (diffY < 0) {
+                [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                    make.left.equalTo(self.mas_left).with.offset(8);
+                    make.top.equalTo(self.mas_top).with.offset(diffY);
+                    make.right.equalTo(self.mas_right).with.offset(-8);
+                    make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+                }];
+            } else {
+                if (diffY == 0) {
+                    NSLog(@"diffY == 0");
+                    UILabel *newFirstLabel = self.labels.lastObject;
+                    [self.labels removeLastObject];
+                    [self.labels insertObject:newFirstLabel atIndex:0];
+                    [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                        make.left.equalTo(self.mas_left).with.offset(8);
+                        make.bottom.equalTo(self.mas_top).with.offset(1);
+                        make.right.equalTo(self.mas_right).with.offset(-8);
+                        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+                    }];
+                    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                        make.left.equalTo(self.mas_left).with.offset(8);
+                        make.top.equalTo(newFirstLabel.mas_bottom);
+                        make.right.equalTo(self.mas_right).with.offset(-8);
+                        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+                    }];
+                } else if (diffY < self.heightMultiplyNumber * self.frame.size.height) {
+                    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                        make.left.equalTo(self.mas_left).with.offset(8);
+                        make.top.equalTo(self.mas_top).with.offset(diffY);
+                        make.right.equalTo(self.mas_right).with.offset(-8);
+                        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+                    }];
+                }
+            }
         }
+        [self layoutIfNeeded];
     }
 }
 
