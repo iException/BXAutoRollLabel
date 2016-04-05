@@ -1,0 +1,19 @@
+PODS:
+  - BXAutoRollLabel (0.1.0):
+    - Masonry
+  - Masonry (1.0.0)
+
+DEPENDENCIES:
+  - BXAutoRollLabel (from `../`)
+
+EXTERNAL SOURCES:
+  BXAutoRollLabel:
+    :path: ../
+
+SPEC CHECKSUMS:
+  BXAutoRollLabel: 91fbf419c5bf54b6e6cd121e3938b722d357915e
+  Masonry: b529bb169217897b6354d4b56b1fada6d475b13d
+
+PODFILE CHECKSUM: 3ebcde0e862849038cd74607f9e65ef3d2ab2693
+
+COCOAPODS: 1.0.0.beta.6

@@ -1,0 +1,6 @@
+FRAMEWORK_SEARCH_PATHS = $(inherited) "$CONFIGURATION_BUILD_DIR/BXAutoRollLabel-iOS7.1" "$CONFIGURATION_BUILD_DIR/Masonry-iOS7.1"
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
+LD_RUNPATH_SEARCH_PATHS = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+OTHER_CFLAGS = $(inherited) -iquote "$CONFIGURATION_BUILD_DIR/BXAutoRollLabel-iOS7.1/BXAutoRollLabel.framework/Headers" -iquote "$CONFIGURATION_BUILD_DIR/Masonry-iOS7.1/Masonry.framework/Headers"
+OTHER_LDFLAGS = $(inherited) -framework "BXAutoRollLabel" -framework "Masonry"
+PODS_ROOT = ${SRCROOT}/Pods

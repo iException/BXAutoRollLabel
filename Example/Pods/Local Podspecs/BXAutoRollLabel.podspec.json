@@ -1,0 +1,25 @@
+{
+  "name": "BXAutoRollLabel",
+  "version": "0.1.0",
+  "summary": "A short description of BXAutoRollLabel..",
+  "description": "description..",
+  "homepage": "https://github.com/iException/BXAutoRollLabel",
+  "license": "MIT",
+  "authors": {
+    "monzy613": "monzy613@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/iException/BXAutoRollLabel.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "7.0"
+  },
+  "requires_arc": true,
+  "source_files": "Pod/Classes/**/*",
+  "dependencies": {
+    "Masonry": [
+
+    ]
+  }
+}
