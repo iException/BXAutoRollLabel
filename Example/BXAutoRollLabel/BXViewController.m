@@ -19,7 +19,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.autoRollLabel = [[BXAutoRollLabel alloc] initWithFrame:CGRectMake(0, 0, 0, 0) interval:1 visibleAmount:1];
+    self.autoRollLabel = [[BXAutoRollLabel alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
+    self.autoRollLabel.visibleAmount = 3;
     self.autoRollLabel.dataSource = self;
     self.autoRollLabel.delegate = self;
     [self.view addSubview:self.autoRollLabel];
@@ -27,25 +28,45 @@
         make.centerX.equalTo(self.view.mas_centerX);
         make.centerY.equalTo(self.view.mas_centerY);
         make.width.equalTo(self.view.mas_width);
-        make.height.equalTo(@50);
+        make.height.equalTo(@200);
     }];
     [self.autoRollLabel startAutoRoll];
 	// Do any additional setup after loading the view, typically from a nib.
 }
 
-- (NSInteger)numberOfNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel
+- (NSInteger)numberOfLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel
 {
     return 4;
 }
 
-- (NSString *)titleForNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
+- (NSString *)titleForLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
 {
     return [NSString stringWithFormat:@"new new new %ld", (long)index];
 }
 
 - (void)tapped:(UITapGestureRecognizer *)tap
 {
-    NSLog(@"tapped");
+    UIView* view = tap.view;
+    CGPoint location = [tap locationInView:view];
+    UILabel* touchedSubview = [view hitTest:location withEvent:nil];
+    NSLog(@"tapped: %@", touchedSubview.text);
+}
+
+- (void)labelTappedAtIndex:(NSInteger)index
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Label Index" message:[NSString stringWithFormat:@"%ld", (long)index] preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+    }]];
+    [self presentViewController:alertController animated:true completion:nil];
+}
+
+- (UIColor *)backgroundColorForLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
+{
+    if (index % 2 == 0) {
+        return [UIColor yellowColor];
+    } else {
+        return [UIColor redColor];
+    }
 }
 
 - (void)didReceiveMemoryWarning

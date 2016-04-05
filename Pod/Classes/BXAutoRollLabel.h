@@ -11,12 +11,14 @@
 @class BXAutoRollLabel;
 
 @protocol BXAutoRollLabelDataSource <NSObject>
-- (NSInteger)numberOfNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel;
-- (NSString *)titleForNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index;
+- (NSInteger)numberOfLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel;
+- (NSString *)titleForLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index;
+@optional
+- (UIColor *)backgroundColorForLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index;
 @end
 
 @protocol BXAutoRollLabelDelegate <NSObject>
-- (void)tapped:(UITapGestureRecognizer *)tap;
+- (void)labelTappedAtIndex:(NSInteger)index;
 @end
 
 
@@ -26,7 +28,7 @@
 @property (nonatomic, weak) id<BXAutoRollLabelDataSource> dataSource;
 @property (nonatomic, weak) id<BXAutoRollLabelDelegate> delegate;
 
-- (instancetype)initWithFrame:(CGRect)frame interval:(NSTimeInterval)interval visibleAmount:(NSInteger)amount;
+- (instancetype)initWithFrame:(CGRect)frame;
 - (void)startAutoRoll;
 - (void)stopAutoScroll;
 @end
