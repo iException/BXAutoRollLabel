@@ -8,11 +8,25 @@
 
 #import <UIKit/UIKit.h>
 
-@interface BXAutoRollLabel : UIView
-@property (nonatomic, strong) NSArray<NSString *> *texts;
-@property (nonatomic, assign) NSTimeInterval interval;
+@class BXAutoRollLabel;
 
-- (instancetype)initWithFrame:(CGRect)frame andTexts: (NSArray<NSString *> *)texts interval:(NSTimeInterval)interval;
-- (void)startAutoScroll;
+@protocol BXAutoRollLabelDataSource <NSObject>
+- (NSInteger)numberOfNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel;
+- (NSString *)titleForNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index;
+@end
+
+@protocol BXAutoRollLabelDelegate <NSObject>
+- (void)tapped:(UITapGestureRecognizer *)tap;
+@end
+
+
+@interface BXAutoRollLabel : UIView
+@property (nonatomic) NSTimeInterval interval;
+@property (nonatomic) NSInteger visibleAmount;
+@property (nonatomic, weak) id<BXAutoRollLabelDataSource> dataSource;
+@property (nonatomic, weak) id<BXAutoRollLabelDelegate> delegate;
+
+- (instancetype)initWithFrame:(CGRect)frame interval:(NSTimeInterval)interval visibleAmount:(NSInteger)amount;
+- (void)startAutoRoll;
 - (void)stopAutoScroll;
 @end

@@ -12,35 +12,41 @@
 @interface BXAutoRollLabel ()
 @property (nonatomic, strong) UILabel *currentDisplayingLabel;
 @property (nonatomic, strong) UILabel *nextLabel;
-@property (nonatomic, assign) NSInteger currentDisplayingIndex;
+@property (nonatomic) NSInteger currentDisplayingIndex;
 @property (nonatomic, weak) NSTimer *timer;
+
 @end
 
 @implementation BXAutoRollLabel
 
 
-- (instancetype)initWithFrame:(CGRect)frame andTexts: (NSArray<NSString *> *)texts interval:(NSTimeInterval)interval
+- (instancetype)initWithFrame:(CGRect)frame interval:(NSTimeInterval)interval visibleAmount:(NSInteger)visibleAmount
 {
     self = [super initWithFrame:frame];
 
     if (self) {
-        self.backgroundColor = [UIColor yellowColor];
         self.clipsToBounds = YES;
-        self.texts = texts;
         self.interval = interval;
+        self.visibleAmount = visibleAmount;
         self.currentDisplayingIndex = 0;
         [self addSubview:self.currentDisplayingLabel];
         [self addSubview:self.nextLabel];
 
         [self setupLayoutConstraints];
 
-        //UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(newsTapped:)];
-        //[self addGestureRecognizer:tap];
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapped:)];
+        [self addGestureRecognizer:tap];
     }
     
     return self;
 }
 
+- (void)tapped:(UITapGestureRecognizer *)tap
+{
+    if (self.delegate && [self.delegate respondsToSelector:@selector(tapped:)]) {
+        [self.delegate tapped:tap];
+    }
+}
 
 #pragma mark - privates -
 - (void)setupLayoutConstraints
@@ -59,13 +65,15 @@
 }
 
 
-- (void)startAutoScroll
+- (void)startAutoRoll
 {
     if (self.timer) {
         return;
     }
 
-    self.currentDisplayingLabel.text = self.texts[self.currentDisplayingIndex];
+    if (self.dataSource && [self.dataSource respondsToSelector:@selector(titleForNewsInAutoRollLabel:atIndex:)]) {
+        self.currentDisplayingLabel.text = [self.dataSource titleForNewsInAutoRollLabel:self atIndex:self.currentDisplayingIndex];
+    }
 
     self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(scrollToNext:) userInfo:nil repeats:YES];
 }
@@ -77,9 +85,10 @@
 
 - (void)scrollToNext:(NSTimer *)timer
 {
-    NSLog(@"scrollToNext: %@", self.currentDisplayingLabel.text);
     NSInteger nextIndex = [self nextDisplayingIndex];
-    self.nextLabel.text = self.texts[nextIndex];
+    if (self.dataSource && [self.dataSource respondsToSelector:@selector(titleForNewsInAutoRollLabel:atIndex:)]) {
+        self.nextLabel.text = [self.dataSource titleForNewsInAutoRollLabel:self atIndex:nextIndex];
+    }
 
     [self animateNextLabelToVisibleCompletion:^{
         UILabel *tmpLabel = self.currentDisplayingLabel;
@@ -125,8 +134,13 @@
 
 - (NSInteger)nextDisplayingIndex
 {
-    NSInteger totalCount = self.texts.count;
+    NSInteger totalCount = 0;
     NSInteger nextIndex = self.currentDisplayingIndex + 1;
+
+    if (self.dataSource && [self.dataSource respondsToSelector:@selector(numberOfNewsInAutoRollLabel:)]) {
+        totalCount = [self.dataSource numberOfNewsInAutoRollLabel:self];
+    }
+
     if (nextIndex >= totalCount) {
         nextIndex = 0;
     }

@@ -10,7 +10,7 @@
 #import "Masonry.h"
 #import <BXAutoRollLabel/BXAutoRollLabel.h>
 
-@interface BXViewController ()
+@interface BXViewController () <BXAutoRollLabelDataSource, BXAutoRollLabelDelegate>
 @property (nonatomic) BXAutoRollLabel *autoRollLabel;
 @end
 
@@ -19,7 +19,9 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.autoRollLabel = [[BXAutoRollLabel alloc] initWithFrame:CGRectMake(0, 0, 0, 0) andTexts:@[@"text1", @"text2", @"text3", @"text4"] interval:1];
+    self.autoRollLabel = [[BXAutoRollLabel alloc] initWithFrame:CGRectMake(0, 0, 0, 0) interval:1 visibleAmount:1];
+    self.autoRollLabel.dataSource = self;
+    self.autoRollLabel.delegate = self;
     [self.view addSubview:self.autoRollLabel];
     [self.autoRollLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.equalTo(self.view.mas_centerX);
@@ -27,8 +29,23 @@
         make.width.equalTo(self.view.mas_width);
         make.height.equalTo(@50);
     }];
-    [self.autoRollLabel startAutoScroll];
+    [self.autoRollLabel startAutoRoll];
 	// Do any additional setup after loading the view, typically from a nib.
+}
+
+- (NSInteger)numberOfNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel
+{
+    return 4;
+}
+
+- (NSString *)titleForNewsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
+{
+    return [NSString stringWithFormat:@"new new new %ld", (long)index];
+}
+
+- (void)tapped:(UITapGestureRecognizer *)tap
+{
+    NSLog(@"tapped");
 }
 
 - (void)didReceiveMemoryWarning
