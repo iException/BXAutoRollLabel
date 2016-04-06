@@ -23,7 +23,8 @@
     self.autoRollLabel.visibleAmount = 3;
     self.autoRollLabel.dataSource = self;
     self.autoRollLabel.delegate = self;
-    self.autoRollLabel.backgroundColor = [UIColor yellowColor];
+    self.autoRollLabel.backgroundColor = [UIColor clearColor];
+    self.autoRollLabel.direction = BXAutoRollDirectionDown;
     [self.view addSubview:self.autoRollLabel];
     [self.autoRollLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.equalTo(self.view.mas_centerX);
@@ -45,14 +46,6 @@
     return [NSString stringWithFormat:@"new new new %ld", (long)index];
 }
 
-- (void)tapped:(UITapGestureRecognizer *)tap
-{
-    UIView* view = tap.view;
-    CGPoint location = [tap locationInView:view];
-    UILabel* touchedSubview = [view hitTest:location withEvent:nil];
-    NSLog(@"tapped: %@", touchedSubview.text);
-}
-
 - (void)labelTappedAtIndex:(NSInteger)index
 {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Label Index" message:[NSString stringWithFormat:@"%ld", (long)index] preferredStyle:UIAlertControllerStyleAlert];
@@ -63,7 +56,6 @@
 
 - (UIColor *)backgroundColorForLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
 {
-    return [UIColor clearColor];
     if (index % 2 == 0) {
         return [UIColor yellowColor];
     } else {

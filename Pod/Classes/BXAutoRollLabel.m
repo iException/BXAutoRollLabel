@@ -13,6 +13,7 @@
 @property (nonatomic) NSMutableArray<UILabel *> *labels;
 @property (nonatomic, weak) NSTimer *timer;
 @property (nonatomic) BOOL isPaused;
+@property (nonatomic) CGFloat lastDiffY;
 @property (nonatomic) CGPoint previousPoint;
 
 @end
@@ -28,10 +29,8 @@
         self.interval = 2.0;
         self.visibleAmount = 1;
         self.isPaused = NO;
-
-        //self.currentDisplayingIndex = 0;
-        //[self addSubview:self.currentDisplayingLabel];
-        //[self addSubview:self.nextLabel];
+        self.lastDiffY = -1;
+        self.direction = BXAutoRollDirectionUp;
 
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapped:)];
         [self addGestureRecognizer:tap];
@@ -42,7 +41,7 @@
 
 - (void)tapped:(UITapGestureRecognizer *)tap
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(tapped:)]) {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(labelTappedAtIndex:)]) {
         UIView* view = tap.view;
         CGPoint location = [tap locationInView:view];
         UILabel* touchedSubview = [view hitTest:location withEvent:nil];
@@ -55,7 +54,6 @@
 }
 
 #pragma mark - touch events
-
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesBegan:touches withEvent:event];
@@ -74,49 +72,17 @@
 
         UILabel *oldFirstLabel = self.labels.firstObject;
         CGFloat oldFirstLabelY = oldFirstLabel.frame.origin.y;
+        CGFloat rowHeight = oldFirstLabel.bounds.size.height;
 
         //scroll up
-        if (-oldFirstLabelY >= oldFirstLabel.bounds.size.height) {
-            NSLog(@"if case1 diffY: %f, firstLabelY: %f", diffY, oldFirstLabelY);
-            [self.labels removeObjectAtIndex:0];
-            UILabel *newFirstLabel = self.labels.firstObject;
-            UILabel *lastLabel = self.labels.lastObject;
-            [self.labels addObject:oldFirstLabel];
-
-            [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-                make.left.equalTo(self.mas_left).with.offset(8);
-                make.top.equalTo(self.mas_top);
-                make.right.equalTo(self.mas_right).with.offset(-8);
-                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-            }];
-
-            [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-                make.top.equalTo(lastLabel.mas_bottom);
-                make.left.equalTo(self.mas_left).with.offset(8);
-                make.right.equalTo(self.mas_right).with.offset(-8);
-                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-            }];
-
+        if (-oldFirstLabelY >= rowHeight) {
+            NSLog(@"first become last");
+            [self moveFirstToLast:0];
             self.previousPoint = currentPoint;
         } else {
-            NSLog(@"if case2 diffY: %f, firstLabelY: %f", diffY, oldFirstLabelY);
-//            UILabel *newFirstLabel = self.labels.lastObject;
-//            [self.labels removeLastObject];
-//            [self.labels insertObject:newFirstLabel atIndex:0];
-//
-//            [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-//                make.left.equalTo(self.mas_left).with.offset(8);
-//                make.bottom.equalTo(self.mas_top).with.offset(diffY);
-//                make.right.equalTo(self.mas_right).with.offset(-8);
-//                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-//            }];
-//
-//            [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-//                make.left.equalTo(self.mas_left).with.offset(8);
-//                make.top.equalTo(newFirstLabel.mas_bottom);
-//                make.right.equalTo(self.mas_right).with.offset(-8);
-//                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-//            }];
+            if (diffY == 0) {
+                return;
+            }
             if (diffY < 0) {
                 [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
                     make.left.equalTo(self.mas_left).with.offset(8);
@@ -125,47 +91,97 @@
                     make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
                 }];
             } else {
-                if (diffY == 0) {
-                    NSLog(@"diffY == 0");
-                    UILabel *newFirstLabel = self.labels.lastObject;
-                    [self.labels removeLastObject];
-                    [self.labels insertObject:newFirstLabel atIndex:0];
-                    [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-                        make.left.equalTo(self.mas_left).with.offset(8);
-                        make.bottom.equalTo(self.mas_top).with.offset(1);
-                        make.right.equalTo(self.mas_right).with.offset(-8);
-                        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-                    }];
-                    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-                        make.left.equalTo(self.mas_left).with.offset(8);
-                        make.top.equalTo(newFirstLabel.mas_bottom);
-                        make.right.equalTo(self.mas_right).with.offset(-8);
-                        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-                    }];
-                } else if (diffY < self.heightMultiplyNumber * self.frame.size.height) {
-                    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-                        make.left.equalTo(self.mas_left).with.offset(8);
-                        make.top.equalTo(self.mas_top).with.offset(diffY);
-                        make.right.equalTo(self.mas_right).with.offset(-8);
-                        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-                    }];
+                if (oldFirstLabelY >= 0 && diffY != 0) {
+                    NSLog(@"old1STY >= 0, diffY: %f", diffY);
+                    //move last to first
+                    [self moveLastToFirst:1.0];
+                    self.previousPoint = currentPoint;
+                } else {
+                    if (oldFirstLabelY <= rowHeight) {
+                        NSLog(@"firstLabel above: %f", oldFirstLabelY);
+                        [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                            make.left.equalTo(self.mas_left).with.offset(8);
+                            make.bottom.equalTo(self.mas_top).with.offset(diffY);
+                            make.right.equalTo(self.mas_right).with.offset(-8);
+                            make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+                        }];
+                    } else {
+                        NSLog(@"firstLabel too low: %f", oldFirstLabelY);
+                        [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                            make.left.equalTo(self.mas_left).with.offset(8);
+                            make.top.equalTo(self.mas_top).with.offset(diffY);
+                            make.right.equalTo(self.mas_right).with.offset(-8);
+                            make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+                        }];
+                    }
                 }
             }
         }
         [self layoutIfNeeded];
+        self.lastDiffY = diffY;
     }
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesEnded:touches withEvent:event];
+    self.previousPoint = [[touches anyObject] locationInView:self];
+    NSLog(@"touchesEnded");
+    if (self.labels.firstObject.frame.origin.y > 0) {
+        [self moveLastToFirst:self.labels.firstObject.frame.origin.y];
+    }
     self.isPaused = NO;
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesCancelled:touches withEvent:event];
+    self.previousPoint = [[touches anyObject] locationInView:self];
     self.isPaused = NO;
+}
+
+- (void)moveLastToFirst:(CGFloat)offset
+{
+    UILabel *oldFirstLabel = self.labels.firstObject;
+    UILabel *newFirstLabel = self.labels.lastObject;
+    [self.labels removeLastObject];
+    [self.labels insertObject:newFirstLabel atIndex:0];
+    [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+        make.left.equalTo(self.mas_left).with.offset(8);
+        make.bottom.equalTo(self.mas_top).with.offset(offset);
+        make.right.equalTo(self.mas_right).with.offset(-8);
+        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+    }];
+    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+        make.left.equalTo(self.mas_left).with.offset(8);
+        make.top.equalTo(newFirstLabel.mas_bottom);
+        make.right.equalTo(self.mas_right).with.offset(-8);
+        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+    }];
+    [self layoutIfNeeded];
+}
+
+- (void)moveFirstToLast:(CGFloat)offset
+{
+    UILabel *oldFirstLabel = self.labels.firstObject;
+    [self.labels removeObjectAtIndex:0];
+    UILabel *newFirstLabel = self.labels.firstObject;
+    UILabel *lastLabel = self.labels.lastObject;
+    [self.labels addObject:oldFirstLabel];
+    [newFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+        make.left.equalTo(self.mas_left).with.offset(8);
+        make.top.equalTo(self.mas_top);
+        make.right.equalTo(self.mas_right).with.offset(-8);
+        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+    }];
+
+    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+        make.top.equalTo(lastLabel.mas_bottom);
+        make.left.equalTo(self.mas_left).with.offset(8);
+        make.right.equalTo(self.mas_right).with.offset(-8);
+        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+    }];
+    [self layoutIfNeeded];
 }
 
 #pragma mark - privates -
@@ -198,7 +214,14 @@
     }
 
     [self setupLayoutConstraints];
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(scrollToNext:) userInfo:nil repeats:YES];
+    switch (self.direction) {
+        case BXAutoRollDirectionUp:
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(rollToNext:) userInfo:nil repeats:YES];
+            break;
+        case BXAutoRollDirectionDown:
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(rollToDown:) userInfo:nil repeats:YES];
+            break;
+    }
 }
 
 - (void)stopAutoScroll
@@ -206,7 +229,7 @@
     [self.timer invalidate];
 }
 
-- (void)scrollToNext:(NSTimer *)timer
+- (void)rollToNext:(NSTimer *)timer
 {
     if (self.isPaused == YES) {
         return;
@@ -239,6 +262,41 @@
             make.right.equalTo(self.mas_right).with.offset(-8);
             make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
         }];
+    }];
+}
+
+- (void)rollToDown:(NSTimer *)timer
+{
+    if (self.isPaused == YES) {
+        return;
+    }
+
+    UILabel *oldFirstLabel = self.labels.firstObject;
+    UILabel *lastLabel = self.labels.lastObject;
+    [self.labels removeLastObject];
+    [self.labels insertObject:lastLabel atIndex:0];
+    [lastLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+        make.bottom.equalTo(self.mas_top);
+        make.left.equalTo(self.mas_left).with.offset(8);
+        make.right.equalTo(self.mas_right).with.offset(-8);
+        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+    }];
+    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+        make.top.equalTo(lastLabel.mas_bottom);
+        make.left.equalTo(self.mas_left).with.offset(8);
+        make.right.equalTo(self.mas_right).with.offset(-8);
+        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+    }];
+    [self layoutIfNeeded];
+    [UIView animateWithDuration:1.0f animations:^{
+        [lastLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+            make.top.equalTo(self.mas_top);
+            make.left.equalTo(self.mas_left).with.offset(8);
+            make.right.equalTo(self.mas_right).with.offset(-8);
+            make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+        }];
+        [self layoutIfNeeded];
+    } completion:^(BOOL finished){
     }];
 }
 

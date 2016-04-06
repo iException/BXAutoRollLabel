@@ -9,6 +9,12 @@
 #import <UIKit/UIKit.h>
 
 @class BXAutoRollLabel;
+enum BXAutoRollDirection
+{
+    BXAutoRollDirectionUp,
+    BXAutoRollDirectionDown
+};
+typedef enum BXAutoRollDirection BXAutoRollDirection;
 
 @protocol BXAutoRollLabelDataSource <NSObject>
 - (NSInteger)numberOfLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel;
@@ -25,6 +31,7 @@
 @interface BXAutoRollLabel : UIView
 @property (nonatomic) NSTimeInterval interval;
 @property (nonatomic) NSInteger visibleAmount;
+@property (nonatomic) BXAutoRollDirection direction;
 @property (nonatomic, weak) id<BXAutoRollLabelDataSource> dataSource;
 @property (nonatomic, weak) id<BXAutoRollLabelDelegate> delegate;
 
