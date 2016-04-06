@@ -29,7 +29,9 @@ typedef enum BXAutoRollDirection BXAutoRollDirection;
 
 
 @interface BXAutoRollLabel : UIView
-@property (nonatomic) NSTimeInterval interval;
+@property (nonatomic) NSTimeInterval timeInterval;
+@property (nonatomic) CGFloat fontSize;
+@property (nonatomic) NSTextAlignment textAlignment;
 @property (nonatomic) NSInteger visibleAmount;
 @property (nonatomic) BXAutoRollDirection direction;
 @property (nonatomic, weak) id<BXAutoRollLabelDataSource> dataSource;

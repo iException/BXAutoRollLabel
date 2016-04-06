@@ -13,7 +13,6 @@
 @property (nonatomic) NSMutableArray<UILabel *> *labels;
 @property (nonatomic, weak) NSTimer *timer;
 @property (nonatomic) BOOL isPaused;
-@property (nonatomic) CGFloat lastDiffY;
 @property (nonatomic) CGPoint previousPoint;
 
 @end
@@ -26,11 +25,13 @@
     self = [super initWithFrame:frame];
     if (self) {
         self.clipsToBounds = YES;
-        self.interval = 2.0;
+        self.timeInterval = 2.0;
         self.visibleAmount = 1;
         self.isPaused = NO;
-        self.lastDiffY = -1;
         self.direction = BXAutoRollDirectionUp;
+        self.fontSize = 14;
+        self.textAlignment = NSTextAlignmentCenter;
+        self.backgroundColor = [UIColor whiteColor];
 
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapped:)];
         [self addGestureRecognizer:tap];
@@ -118,26 +119,41 @@
             }
         }
         [self layoutIfNeeded];
-        self.lastDiffY = diffY;
     }
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesEnded:touches withEvent:event];
-    self.previousPoint = [[touches anyObject] locationInView:self];
-    NSLog(@"touchesEnded");
+    CGPoint currentPoint = [[touches anyObject] locationInView:self];
+    CGFloat diffY = currentPoint.y - self.previousPoint.y;
+    self.previousPoint = currentPoint;
     if (self.labels.firstObject.frame.origin.y > 0) {
         [self moveLastToFirst:self.labels.firstObject.frame.origin.y];
     }
-    self.isPaused = NO;
+    [self animateToProperplace:diffY];
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesCancelled:touches withEvent:event];
-    self.previousPoint = [[touches anyObject] locationInView:self];
+    CGPoint currentPoint = [[touches anyObject] locationInView:self];
+    CGFloat diffY = currentPoint.y - self.previousPoint.y;
+    self.previousPoint = currentPoint;
+    [self animateToProperplace:diffY];
+}
+
+- (void)animateToProperplace:(CGFloat)direction
+{
+    //direction > 0 down, < 0 up
+    [self.timer invalidate];
+    [self restartTimer];
     self.isPaused = NO;
+    if (direction < 0) {
+        [self rollUp:self.timer];
+    } else if (direction > 0) {
+        [self rollDown:self.timer];
+    }
 }
 
 - (void)moveLastToFirst:(CGFloat)offset
@@ -214,12 +230,17 @@
     }
 
     [self setupLayoutConstraints];
+    [self restartTimer];
+}
+
+- (void)restartTimer
+{
     switch (self.direction) {
         case BXAutoRollDirectionUp:
-            self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(rollToNext:) userInfo:nil repeats:YES];
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:self.timeInterval target:self selector:@selector(rollUp:) userInfo:nil repeats:YES];
             break;
         case BXAutoRollDirectionDown:
-            self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval target:self selector:@selector(rollToDown:) userInfo:nil repeats:YES];
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:self.timeInterval target:self selector:@selector(rollDown:) userInfo:nil repeats:YES];
             break;
     }
 }
@@ -229,19 +250,24 @@
     [self.timer invalidate];
 }
 
-- (void)rollToNext:(NSTimer *)timer
+- (void)rollUp:(NSTimer *)timer
 {
     if (self.isPaused == YES) {
         return;
     }
+
     UILabel *oldFirstLabel = self.labels.firstObject;
+    NSTimeInterval interval = 1.0f;
+    if (oldFirstLabel.frame.origin.y < 0) {
+        interval = 0.5f;
+    }
     [self.labels removeObjectAtIndex:0];
     UILabel *newFirstLabel = self.labels.firstObject;
     UILabel *lastLabel = self.labels.lastObject;
     [self.labels addObject:oldFirstLabel];
 
 
-    [UIView animateWithDuration:1.0f animations:^{
+    [UIView animateWithDuration:interval animations:^{
         [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
             make.bottom.equalTo(self.mas_top);
             make.left.equalTo(self.mas_left).with.offset(8);
@@ -265,39 +291,50 @@
     }];
 }
 
-- (void)rollToDown:(NSTimer *)timer
+- (void)rollDown:(NSTimer *)timer
 {
     if (self.isPaused == YES) {
         return;
     }
 
     UILabel *oldFirstLabel = self.labels.firstObject;
-    UILabel *lastLabel = self.labels.lastObject;
-    [self.labels removeLastObject];
-    [self.labels insertObject:lastLabel atIndex:0];
-    [lastLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-        make.bottom.equalTo(self.mas_top);
-        make.left.equalTo(self.mas_left).with.offset(8);
-        make.right.equalTo(self.mas_right).with.offset(-8);
-        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-    }];
-    [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-        make.top.equalTo(lastLabel.mas_bottom);
-        make.left.equalTo(self.mas_left).with.offset(8);
-        make.right.equalTo(self.mas_right).with.offset(-8);
-        make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
-    }];
-    [self layoutIfNeeded];
-    [UIView animateWithDuration:1.0f animations:^{
+    if (oldFirstLabel.frame.origin.y < 0) {
+        [UIView animateWithDuration:0.5f animations:^{
+            [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                make.top.equalTo(self.mas_top);
+                make.left.equalTo(self.mas_left).with.offset(8);
+                make.right.equalTo(self.mas_right).with.offset(-8);
+                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+            }];
+            [self layoutIfNeeded];
+        } completion:nil];
+    } else {
+        UILabel *lastLabel = self.labels.lastObject;
+        [self.labels removeLastObject];
+        [self.labels insertObject:lastLabel atIndex:0];
         [lastLabel mas_remakeConstraints:^(MASConstraintMaker *make){
-            make.top.equalTo(self.mas_top);
+            make.bottom.equalTo(self.mas_top);
+            make.left.equalTo(self.mas_left).with.offset(8);
+            make.right.equalTo(self.mas_right).with.offset(-8);
+            make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+        }];
+        [oldFirstLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+            make.top.equalTo(lastLabel.mas_bottom);
             make.left.equalTo(self.mas_left).with.offset(8);
             make.right.equalTo(self.mas_right).with.offset(-8);
             make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
         }];
         [self layoutIfNeeded];
-    } completion:^(BOOL finished){
-    }];
+        [UIView animateWithDuration:1.0f animations:^{
+            [lastLabel mas_remakeConstraints:^(MASConstraintMaker *make){
+                make.top.equalTo(self.mas_top);
+                make.left.equalTo(self.mas_left).with.offset(8);
+                make.right.equalTo(self.mas_right).with.offset(-8);
+                make.height.equalTo(self.mas_height).with.multipliedBy(self.heightMultiplyNumber);
+            }];
+            [self layoutIfNeeded];
+        } completion:nil];
+    }
 }
 
 - (NSInteger)amountOfAll
@@ -350,25 +387,6 @@
     }
     return _labels;
 }
-/*
-- (UILabel *)currentDisplayingLabel
-{
-    if (!_currentDisplayingLabel) {
-        _currentDisplayingLabel = [self textScrollLabel];
-    }
-
-    return _currentDisplayingLabel;
-}
-
-- (UILabel *)nextLabel
-{
-    if (!_nextLabel) {
-        _nextLabel = [self textScrollLabel];
-    }
-
-    return _nextLabel;
-}
-*/
 
 - (CGFloat)heightMultiplyNumber
 {
@@ -380,7 +398,8 @@
     UILabel *label = [[UILabel alloc] init];
     label.userInteractionEnabled = YES;
     label.textColor = [UIColor blackColor];
-    label.font = [UIFont systemFontOfSize:14];
+    label.font = [UIFont systemFontOfSize:_fontSize];
+    label.textAlignment = _textAlignment;
     return label;
 }
 

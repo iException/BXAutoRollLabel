@@ -24,7 +24,7 @@
     self.autoRollLabel.dataSource = self;
     self.autoRollLabel.delegate = self;
     self.autoRollLabel.backgroundColor = [UIColor clearColor];
-    self.autoRollLabel.direction = BXAutoRollDirectionDown;
+    self.autoRollLabel.direction = BXAutoRollDirectionUp;
     [self.view addSubview:self.autoRollLabel];
     [self.autoRollLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.equalTo(self.view.mas_centerX);
