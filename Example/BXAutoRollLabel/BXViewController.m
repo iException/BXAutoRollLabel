@@ -33,7 +33,6 @@
         make.height.equalTo(@200);
     }];
     [self.autoRollLabel startAutoRoll];
-	// Do any additional setup after loading the view, typically from a nib.
 }
 
 - (NSInteger)numberOfLabelsInAutoRollLabel:(BXAutoRollLabel *)autoRollLabel
@@ -46,7 +45,7 @@
     return [NSString stringWithFormat:@"new new new %ld", (long)index];
 }
 
-- (void)labelTappedAtIndex:(NSInteger)index
+- (void)labelTapped:(BXAutoRollLabel *)autoRollLabel index:(NSInteger)index
 {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Label Index" message:[NSString stringWithFormat:@"%ld", (long)index] preferredStyle:UIAlertControllerStyleAlert];
     [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
@@ -54,19 +53,12 @@
     [self presentViewController:alertController animated:true completion:nil];
 }
 
-- (UIColor *)backgroundColorForLabel:(BXAutoRollLabel *)autoRollLabel atIndex:(NSInteger)index
+- (UILabel *)labelStyle:(BXAutoRollLabel *)autoRollLabel index:(NSInteger)index
 {
-    if (index % 2 == 0) {
-        return [UIColor yellowColor];
-    } else {
-        return [UIColor redColor];
-    }
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    UILabel *patternLabel = [[UILabel alloc] init];
+    patternLabel.textColor = [UIColor redColor];
+    patternLabel.textAlignment = NSTextAlignmentCenter;
+    return patternLabel;
 }
 
 @end

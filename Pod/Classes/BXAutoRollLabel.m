@@ -29,9 +29,6 @@
         self.visibleAmount = 1;
         self.isPaused = NO;
         self.direction = BXAutoRollDirectionUp;
-        self.fontSize = 14;
-        self.textAlignment = NSTextAlignmentCenter;
-        self.backgroundColor = [UIColor whiteColor];
 
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapped:)];
         [self addGestureRecognizer:tap];
@@ -42,14 +39,12 @@
 
 - (void)tapped:(UITapGestureRecognizer *)tap
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(labelTappedAtIndex:)]) {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(labelTapped:index:)]) {
         UIView* view = tap.view;
         CGPoint location = [tap locationInView:view];
         UILabel* touchedSubview = [view hitTest:location withEvent:nil];
         if (touchedSubview) {
-            [self.delegate labelTappedAtIndex:touchedSubview.tag];
-        } else {
-            [self.delegate labelTappedAtIndex:-1];
+            [self.delegate labelTapped:self index:touchedSubview.tag];
         }
     }
 }
@@ -206,7 +201,7 @@
     UILabel *preLabel;
     [self configureLabels];
     for (NSInteger i = 0; i < [self amountOfAll]; i += 1) {
-        [self.labels[i] mas_makeConstraints:^(MASConstraintMaker *make){
+        [self.labels[i] mas_remakeConstraints:^(MASConstraintMaker *make){
             if (preLabel != nil) {
                 make.top.equalTo(preLabel.mas_bottom);
                 make.left.equalTo(self.mas_left).with.offset(8);
@@ -355,12 +350,13 @@
     return @"";
 }
 
-- (UIColor *)backgroundColorAtIndex:(NSInteger)index
+- (UILabel *)patternLabelAtIndex:(NSInteger)index
 {
-    if (self.dataSource && [self.dataSource respondsToSelector:@selector(backgroundColorForLabel:atIndex:)]) {
-        return [self.dataSource backgroundColorForLabel:self atIndex:index];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(labelStyle:index:)]) {
+        return [self.delegate labelStyle:self index:index];
+    } else {
+        return nil;
     }
-    return [UIColor clearColor];
 }
 
 - (void)configureLabels
@@ -369,7 +365,14 @@
     for (NSInteger index = 0; index < [self amountOfAll]; index += 1) {
         NSString *text = [self labelStringAtIndex:index];
         NSLog(@"text: %@", text);
+        UILabel *patternLabel = [self patternLabelAtIndex:index];
         self.labels[index].text = text;
+        if (patternLabel != nil) {
+            self.labels[index].textColor = patternLabel.textColor;
+            self.labels[index].textAlignment = patternLabel.textAlignment;
+            self.labels[index].font = patternLabel.font;
+            self.labels[index].backgroundColor = patternLabel.backgroundColor;
+        }
     }
 }
 
@@ -380,7 +383,6 @@
         for (NSInteger i = 0; i < [self amountOfAll]; i += 1) {
             UILabel *label = [self textScrollLabel];
             label.tag = i;
-            label.backgroundColor = [self backgroundColorAtIndex:i];
             [self addSubview:label];
             [_labels addObject:label];
         }
@@ -398,8 +400,7 @@
     UILabel *label = [[UILabel alloc] init];
     label.userInteractionEnabled = YES;
     label.textColor = [UIColor blackColor];
-    label.font = [UIFont systemFontOfSize:_fontSize];
-    label.textAlignment = _textAlignment;
+    label.font = [UIFont systemFontOfSize:14];
     return label;
 }
 
